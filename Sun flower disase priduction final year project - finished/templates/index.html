@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sunflower Expert System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00ff88;
+            --primary-dark: #00c86b;
+            --accent: #00d2ff;
+            --bg-dark: #0a0f0a;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --error: #ff4757;
+            --success: #2ed573;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Particle Mesh System */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .bg-blob {
+            position: fixed;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            filter: blur(100px);
+            opacity: 0.08;
+            z-index: -2;
+            border-radius: 50%;
+            animation: move-blobs 30s infinite alternate;
+        }
+
+        .bg-blob-2 {
+            position: fixed;
+            bottom: -200px;
+            left: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+            filter: blur(100px);
+            opacity: 0.08;
+            z-index: -2;
+            border-radius: 50%;
+            animation: move-blobs 25s infinite alternate-reverse;
+        }
+
+        @keyframes move-blobs {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(100px, 50px) scale(1.1) rotate(10deg); }
+            100% { transform: translate(-50px, 100px) scale(1) rotate(-10deg); }
+        }
+
+
+        body {
+            background: radial-gradient(circle at center, #0d1a0d, var(--bg-dark));
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            animation: fadeIn 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .upload-area {
+            padding: 4rem 3rem;
+            text-align: center;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.02), transparent);
+        }
+
+        .upload-header {
+            margin-bottom: 3rem;
+        }
+
+        .upload-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .upload-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .upload-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .file-input-label {
+            flex: 1;
+            min-width: 280px;
+            padding: 2.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px dashed rgba(0, 255, 136, 0.3);
+            border-radius: 24px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .file-input-label:hover {
+            background: rgba(0, 255, 136, 0.05);
+            border-color: var(--primary);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .file-input-label p {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .file-input-label span {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .predict-btn {
+            padding: 1.2rem 3rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #000;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s;
+            box-shadow: 0 10px 20px -5px rgba(0, 255, 136, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 15px 30px -5px rgba(0, 255, 136, 0.5);
+            filter: brightness(1.1);
+        }
+
+        .result-area {
+            padding: 3rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .preview-and-result {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        .image-container {
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .uploaded-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.5s;
+        }
+
+        /* Scanning animation overlay */
+        .scan-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+            animation: scan 3s 3 linear;
+            opacity: 0;
+            z-index: 2;
+        }
+
+        @keyframes scan {
+            0% { top: 0; opacity: 0; }
+            5% { opacity: 1; }
+            95% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* Post-scan Grand Glow/Flow animation */
+        .image-container.analysis-complete {
+            animation: 
+                pulse-glow 3s infinite alternate,
+                float-3d 6s infinite ease-in-out;
+            animation-delay: 9s; /* Start after 3 cycles of scan */
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        @keyframes shimmer-flow {
+            0% { transform: translate(-30%, -30%) rotate(0deg); }
+            100% { transform: translate(30%, 30%) rotate(0deg); }
+        }
+
+        @keyframes float-3d {
+            0%, 100% { transform: rotateY(-5deg) rotateX(5deg) translateY(0); }
+            50% { transform: rotateY(5deg) rotateX(-5deg) translateY(-10px); }
+        }
+
+        @keyframes pulse-glow {
+            from { 
+                box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 rgba(0, 255, 136, 0); 
+                border-color: rgba(255,255,255,0.1);
+            }
+            to { 
+                box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(0, 255, 136, 0.5); 
+                border-color: var(--primary);
+            }
+        }
+
+        /* Symptoms feature styling */
+        .symptoms-btn {
+            margin-top: 1.5rem;
+            padding: 0.8rem 1.5rem;
+            background: rgba(0, 210, 255, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            width: fit-content;
+        }
+
+        .symptoms-btn:hover {
+            background: rgba(0, 210, 255, 0.2);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
+        }
+
+        .symptoms-report {
+            margin-top: 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            border-radius: 16px;
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+        }
+
+        .symptoms-report.active {
+            padding: 1.5rem;
+            max-height: 500px;
+            opacity: 1;
+            margin-bottom: 1rem;
+        }
+
+        .report-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.2rem;
+            color: var(--accent);
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .report-title {
+            color: white;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(0, 210, 255, 0.2);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.8rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+        }
+
+        .metric-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .symptom-tag {
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid var(--accent);
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.6rem;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .prediction-box {
+            padding: 1rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1.5rem;
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .prediction-box h3 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .confidence-container {
+            margin: 1.5rem 0;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 1.2rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar-bg {
+            height: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            border-radius: 4px;
+            transition: width 1.5s cubic-bezier(0.1, 0, 0, 1);
+        }
+
+        .suggestions {
+            margin-top: 2.5rem;
+        }
+
+        .suggestions h4 {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .suggestion-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: fadeInRight 0.5s calc(var(--delay) * 0.1s) both;
+        }
+
+        @keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .suggestion-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        @media (max-width: 850px) {
+            .preview-and-result {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+            }
+
+            .image-container {
+                max-width: 500px;
+                margin: 0 auto;
+            }
+
+            .result-area {
+                padding: 2rem 1.5rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .upload-header h2 { font-size: 1.8rem; }
+            .predict-btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-blob"></div>
+    <div class="bg-blob-2"></div>
+    <canvas id="bg-canvas"></canvas>
+    
+    <script>
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const particleCount = 60;
+        const connectionDistance = 150;
+
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5,
+                    size: Math.random() * 2 + 1
+                });
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 255, 136, 0.4)';
+                ctx.fill();
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    const dx = p.x - p2.x;
+                    const dy = p.y - p2.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < connectionDistance) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        const opacity = 1 - (dist / connectionDistance);
+                        ctx.strokeStyle = `rgba(0, 210, 255, ${opacity * 0.2})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function updateFileName(input) {
+            const fileNameDisplay = document.getElementById('file-name');
+            const dropArea = document.getElementById('drop-area');
+            if (input.files && input.files[0]) {
+                const name = input.files[0].name;
+                fileNameDisplay.textContent = "Selected: " + name;
+                dropArea.style.borderColor = "var(--primary)";
+                dropArea.style.background = "rgba(0, 255, 136, 0.1)";
+            }
+        }
+
+        function toggleSymptoms() {
+            const panel = document.getElementById('symptoms-panel');
+            panel.classList.toggle('active');
+            
+            const btn = document.querySelector('.symptoms-btn');
+            if (panel.classList.contains('active')) {
+                btn.style.background = 'rgba(0, 210, 255, 0.3)';
+                btn.innerHTML = '<span style="font-size: 1.2rem;">✖</span> Close Symptoms Report';
+                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                btn.style.background = 'rgba(0, 210, 255, 0.1)';
+                btn.innerHTML = '<span style="font-size: 1.2rem;">🔍</span> View AI Symptoms Report';
+            }
+        }
+
+        window.addEventListener('resize', init);
+        init();
+        animate();
+    </script>
+    
+    <div class="main-container">
+        <div class="upload-area">
+            <div class="upload-header">
+                <h2>Sunflower Leaf Disease Detector</h2>
+                <p>Upload your sunflower leaf image to get instant AI prediction</p>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data">
+                <div class="upload-controls">
+                    <label for="image" class="file-input-label" id="drop-area">
+                        <p id="file-name">Select Sunflower Leaf</p>
+                        <span>Drag & drop or click to browse</span>
+                    </label>
+                    <input type="file" id="image" name="image" accept="image/*" required onchange="updateFileName(this)">
+
+                    <button type="submit" class="predict-btn">Analyze Image</button>
+                </div>
+            </form>
+            <div style="font-size: 0.7rem; color: var(--text-secondary); opacity: 0.5; margin-top: 2rem;"></div>
+        </div>
+
+        {% if prediction %}
+        <div class="result-area">
+            <div class="preview-and-result">
+                <div class="image-container analysis-complete">
+                    <div class="scan-bar"></div>
+                    <img src="{{ image_path }}" alt="Diagnosis Target" class="uploaded-image">
+                </div>
+
+                <div class="prediction-box">
+                    <span class="status-badge">Diagnosis Complete</span>
+                    <h3>{{ prediction }}</h3>
+                    
+                    <div class="confidence-container">
+                        <div class="confidence-label">
+                            <span> Confidence</span>
+                            <strong>{{ confidence }}%</strong>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: {{ confidence }}%"></div>
+                        </div>
+                    </div>
+
+                    <button class="symptoms-btn" onclick="toggleSymptoms()">
+                        <span style="font-size: 1.2rem;">🔍</span> View Symptoms Report
+                    </button>
+
+                    <div class="symptoms-report" id="symptoms-panel">
+                        <div class="report-header">
+                            <span> Diagnostic Analysis</span>
+                            <span style="font-size: 0.7rem; opacity: 0.6;"></span>
+                        </div>
+                        
+                        {% if symptoms %}
+                            <div class="report-title">{{ symptoms.title }}</div>
+                            
+                            <div style="font-size: 0.8rem; color: var(--accent); margin-bottom: 0.8rem; font-weight: 600;">DETECTED SYMPTOMS:</div>
+                            {% for s in symptoms.details %}
+                                <div class="symptom-tag">{{ s }}</div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="symptom-tag">No specific diagnostic metrics available.</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>
+
+
+
